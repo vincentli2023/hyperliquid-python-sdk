@@ -16,7 +16,8 @@ SDK for Hyperliquid API trading with Python.
 
 ## Installation
 ```bash
-pip install hyperliquid-python-sdk
+python3 -m pip install --no-cache-dir --upgrade \
+  git+ssh://git@github.com/vincentli2023/hyperliquid-python-sdk.git@master
 ```
 ## Configuration 
 
