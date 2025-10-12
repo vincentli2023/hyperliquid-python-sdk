@@ -324,6 +324,9 @@ class Info(API):
     def perp_dexs(self) -> Any:
         return self.post("/info", {"type": "perpDexs"})
 
+    def perp_at_oi_cap(self) -> Any:
+        return self.post("/info", {"type": "perpsAtOpenInterestCap"})
+
     def spot_meta(self) -> SpotMeta:
         """Retrieve exchange spot metadata
 
