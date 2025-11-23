@@ -111,6 +111,7 @@ class WebsocketManager(threading.Thread):
         self._ping_thread = threading.Thread(target=self.send_ping_loop, daemon=True)
 
     def _create_ws(self) -> None:
+        logging.info("this is the latest verion")
         self.ws = websocket.WebSocketApp(
             self.ws_url,
             on_message=self.on_message,
