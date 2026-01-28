@@ -324,8 +324,8 @@ class Info(API):
     def perp_dexs(self) -> Any:
         return self.post("/info", {"type": "perpDexs"})
 
-    def perp_at_oi_cap(self) -> Any:
-        return self.post("/info", {"type": "perpsAtOpenInterestCap"})
+    def perp_at_oi_cap(self, dex: str = "") -> Any:
+        return self.post("/info", {"type": "perpsAtOpenInterestCap", "dex": dex})
 
     def perp_dex_limits(self, dex: str = "") -> Any:
         return self.post("/info", {"type": "perpDexLimits", "dex": dex})
