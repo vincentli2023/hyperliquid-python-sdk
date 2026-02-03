@@ -1090,6 +1090,56 @@ class Exchange(API):
             nonce,
         )
 
+    def enable_user_dex_abstraction(self, enabled: bool) -> Any:
+        """
+        Enable or disable HIP-3 DEX abstraction.
+        
+        If set, actions on HIP-3 perps will automatically transfer collateral from 
+        validator-operated USDC perps balance for HIP-3 DEXs where USDC is the collateral token, 
+        and spot otherwise.
+        """
+        timestamp = get_timestamp_ms()
+        is_mainnet = self.base_url == MAINNET_API_URL
+        
+        # Determine Chain IDs and Names based on environment
+        # Mainnet -> Arbitrum One (42161 -> 0xa4b1)
+        # Testnet -> Arbitrum Sepolia (421614 -> 0x66eee)
+        signature_chain_id = "0xa4b1" if is_mainnet else "0x66eee"
+        hyperliquid_chain = "Mainnet" if is_mainnet else "Testnet"
+
+        # Determine the target user address
+        # Priority: Vault Address (Sub-account) > Account Address > Wallet Address
+        user_address = self.wallet.address
+        if self.account_address:
+            user_address = self.account_address
+        if self.vault_address:
+            user_address = self.vault_address
+
+        action = {
+            "type": "userDexAbstraction",
+            "hyperliquidChain": hyperliquid_chain,
+            "signatureChainId": signature_chain_id,
+            "user": user_address,
+            "enabled": enabled,
+            "nonce": timestamp,
+        }
+
+        # Sign the action
+        signature = sign_l1_action(
+            self.wallet,
+            action,
+            None, 
+            timestamp,
+            self.expires_after,
+            is_mainnet,
+        )
+
+        return self._post_action(
+            action,
+            signature,
+            timestamp,
+        )
+        
     def use_big_blocks(self, enable: bool) -> Any:
         timestamp = get_timestamp_ms()
         action = {
