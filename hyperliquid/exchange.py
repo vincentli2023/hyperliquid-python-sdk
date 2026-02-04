@@ -31,9 +31,13 @@ from hyperliquid.utils.signing import (
     sign_token_delegate_action,
     sign_usd_class_transfer_action,
     sign_usd_transfer_action,
+    sign_user_dex_abstraction_action,
+    sign_user_set_abstraction_action,
     sign_withdraw_from_bridge_action,
 )
 from hyperliquid.utils.types import (
+    Abstraction,
+    AgentAbstraction,
     Any,
     BuilderInfo,
     Cloid,
@@ -1089,56 +1093,6 @@ class Exchange(API):
             signature,
             nonce,
         )
-
-    def enable_user_dex_abstraction(self, enabled: bool) -> Any:
-        """
-        Enable or disable HIP-3 DEX abstraction.
-        
-        If set, actions on HIP-3 perps will automatically transfer collateral from 
-        validator-operated USDC perps balance for HIP-3 DEXs where USDC is the collateral token, 
-        and spot otherwise.
-        """
-        timestamp = get_timestamp_ms()
-        is_mainnet = self.base_url == MAINNET_API_URL
-        
-        # Determine Chain IDs and Names based on environment
-        # Mainnet -> Arbitrum One (42161 -> 0xa4b1)
-        # Testnet -> Arbitrum Sepolia (421614 -> 0x66eee)
-        signature_chain_id = "0xa4b1" if is_mainnet else "0x66eee"
-        hyperliquid_chain = "Mainnet" if is_mainnet else "Testnet"
-
-        # Determine the target user address
-        # Priority: Vault Address (Sub-account) > Account Address > Wallet Address
-        user_address = self.wallet.address
-        if self.account_address:
-            user_address = self.account_address
-        if self.vault_address:
-            user_address = self.vault_address
-
-        action = {
-            "type": "userDexAbstraction",
-            "hyperliquidChain": hyperliquid_chain,
-            "signatureChainId": signature_chain_id,
-            "user": user_address,
-            "enabled": enabled,
-            "nonce": timestamp,
-        }
-
-        # Sign the action
-        signature = sign_l1_action(
-            self.wallet,
-            action,
-            None, 
-            timestamp,
-            self.expires_after,
-            is_mainnet,
-        )
-
-        return self._post_action(
-            action,
-            signature,
-            timestamp,
-        )
         
     def use_big_blocks(self, enable: bool) -> Any:
         timestamp = get_timestamp_ms()
@@ -1154,6 +1108,56 @@ class Exchange(API):
             self.expires_after,
             self.base_url == MAINNET_API_URL,
         )
+        return self._post_action(
+            action,
+            signature,
+            timestamp,
+        )
+
+    def agent_set_abstraction(self, abstraction: AgentAbstraction) -> Any:
+        timestamp = get_timestamp_ms()
+        action = {
+            "type": "agentSetAbstraction",
+            "abstraction": abstraction,
+        }
+        signature = sign_l1_action(
+            self.wallet,
+            action,
+            self.vault_address,
+            timestamp,
+            self.expires_after,
+            self.base_url == MAINNET_API_URL,
+        )
+        return self._post_action(
+            action,
+            signature,
+            timestamp,
+        )
+
+    def user_dex_abstraction(self, user: str, enabled: bool) -> Any:
+        timestamp = get_timestamp_ms()
+        action = {
+            "type": "userDexAbstraction",
+            "user": user.lower(),
+            "enabled": enabled,
+            "nonce": timestamp,
+        }
+        signature = sign_user_dex_abstraction_action(self.wallet, action, self.base_url == MAINNET_API_URL)
+        return self._post_action(
+            action,
+            signature,
+            timestamp,
+        )
+
+    def user_set_abstraction(self, user: str, abstraction: Abstraction) -> Any:
+        timestamp = get_timestamp_ms()
+        action = {
+            "type": "userSetAbstraction",
+            "user": user.lower(),
+            "abstraction": abstraction,
+            "nonce": timestamp,
+        }
+        signature = sign_user_set_abstraction_action(self.wallet, action, self.base_url == MAINNET_API_URL)
         return self._post_action(
             action,
             signature,
