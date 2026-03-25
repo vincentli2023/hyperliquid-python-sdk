@@ -88,6 +88,7 @@ class WebsocketManager(threading.Thread):
         super().__init__()
         self.subscription_id_counter = 0
         self.ws_ready = False
+        self.connection_attempt = 0
 
         # 连接建立前排队的订阅
         self.queued_subscriptions: List[Tuple[Subscription, ActiveSubscription]] = []
@@ -104,6 +105,16 @@ class WebsocketManager(threading.Thread):
         self.stop_event = threading.Event()
         self.daemon = True
 
+        self.last_open_ts: float | None = None
+        self.last_message_ts: float | None = None
+        self.last_ping_sent_ts: float | None = None
+        self.last_pong_ts: float | None = None
+        self.last_close_ts: float | None = None
+        self.last_close_status_code: int | None = None
+        self.last_close_msg: str | None = None
+        self.last_error: str | None = None
+        self.last_run_exception: str | None = None
+
         self._create_ws()
 
         # ping 线程
@@ -111,7 +122,7 @@ class WebsocketManager(threading.Thread):
         self._ping_thread = threading.Thread(target=self.send_ping_loop, daemon=True)
 
     def _create_ws(self) -> None:
-        logging.info("this is the latest verion")
+        logging.debug("Creating websocket client for %s", self.ws_url)
         self.ws = websocket.WebSocketApp(
             self.ws_url,
             on_message=self.on_message,
@@ -120,6 +131,42 @@ class WebsocketManager(threading.Thread):
             on_close=self.on_close,
         )
 
+    def _active_subscription_count(self) -> int:
+        return sum(len(active_list) for active_list in self.active_subscriptions.values())
+
+    def _format_elapsed(self, ts: float | None, now: float | None = None) -> str:
+        if ts is None:
+            return "n/a"
+        if now is None:
+            now = time.monotonic()
+        return f"{max(now - ts, 0.0):.1f}s"
+
+    def _reset_connection_diagnostics(self) -> None:
+        self.last_open_ts = None
+        self.last_message_ts = None
+        self.last_ping_sent_ts = None
+        self.last_pong_ts = None
+        self.last_close_ts = None
+        self.last_close_status_code = None
+        self.last_close_msg = None
+        self.last_error = None
+        self.last_run_exception = None
+
+    def _disconnect_reason(self) -> str:
+        now = time.monotonic()
+        details = []
+        if self.last_close_status_code is not None or self.last_close_msg is not None:
+            details.append(
+                f"close_code={self.last_close_status_code}, close_msg={self.last_close_msg or ''}"
+            )
+        if self.last_error is not None:
+            details.append(f"last_error={self.last_error}")
+        if self.last_run_exception is not None:
+            details.append(f"run_exception={self.last_run_exception}")
+        details.append(f"since_last_message={self._format_elapsed(self.last_message_ts, now)}")
+        details.append(f"since_last_pong={self._format_elapsed(self.last_pong_ts, now)}")
+        return ", ".join(details)
+
     def run(self) -> None:
         """主线程：自动重连 + 开 ping 线程"""
         if not self._ping_thread.is_alive():
@@ -127,8 +174,16 @@ class WebsocketManager(threading.Thread):
 
         reconnect_delay = 5
         while not self.stop_event.is_set():
-            logging.info("Websocket connecting to %s ...", self.ws_url)
+            self.connection_attempt += 1
+            self._reset_connection_diagnostics()
             self.ws_ready = False
+            logging.info(
+                "Websocket connecting to %s (attempt=%d, queued_subscriptions=%d, active_subscriptions=%d)",
+                self.ws_url,
+                self.connection_attempt,
+                len(self.queued_subscriptions),
+                self._active_subscription_count(),
+            )
 
             self._create_ws()
 
@@ -136,13 +191,16 @@ class WebsocketManager(threading.Thread):
                 # 不用 websocket-client 的 ping_interval，避免和 HL 协议冲突
                 self.ws.run_forever()
             except Exception as e:
+                self.last_run_exception = str(e)
                 logging.warning("Websocket run_forever raised exception: %s", e)
 
             if self.stop_event.is_set():
                 break
 
             logging.warning(
-                "Websocket connection lost, retrying in %d seconds...", reconnect_delay
+                "Websocket connection lost (%s), retrying in %d seconds...",
+                self._disconnect_reason(),
+                reconnect_delay,
             )
             time.sleep(reconnect_delay)
 
@@ -167,14 +225,24 @@ class WebsocketManager(threading.Thread):
             try:
                 # sock.connected 是 websocket-client 的底层连接状态
                 if ws.sock and ws.sock.connected:
-                    logging.debug("Websocket sending HL ping")
+                    ping_ts = time.monotonic()
+                    self.last_ping_sent_ts = ping_ts
+                    logging.debug(
+                        "Websocket sending HL ping (since_last_message=%s, since_last_pong=%s)",
+                        self._format_elapsed(self.last_message_ts, ping_ts),
+                        self._format_elapsed(self.last_pong_ts, ping_ts),
+                    )
                     ws.send(json.dumps({"method": "ping"}))
+                else:
+                    logging.debug("Websocket ping skipped because socket is not connected")
             except Exception as e:
                 logging.debug("Websocket ping failed: %s", e)
 
     # ---------- WebSocket callbacks ----------
 
     def on_message(self, _ws, message: str) -> None:
+        now = time.monotonic()
+        self.last_message_ts = now
         if message == "Websocket connection established.":
             logging.debug(message)
             return
@@ -182,21 +250,36 @@ class WebsocketManager(threading.Thread):
         ws_msg: WsMsg = json.loads(message)
         identifier = ws_msg_to_identifier(ws_msg)
         if identifier == "pong":
-            logging.debug("Websocket received pong")
+            self.last_pong_ts = now
+            logging.debug(
+                "Websocket received pong (after_ping=%s)",
+                self._format_elapsed(self.last_ping_sent_ts, now),
+            )
             return
         if identifier is None:
             logging.debug("Websocket not handling empty/unknown message")
             return
         active_subscriptions = self.active_subscriptions[identifier]
         if len(active_subscriptions) == 0:
-            print("Websocket message from an unexpected subscription:", message, identifier)
+            logging.warning(
+                "Websocket message from an unexpected subscription: identifier=%s payload=%s",
+                identifier,
+                message,
+            )
         else:
             for active_subscription in active_subscriptions:
                 active_subscription.callback(ws_msg)
 
     def on_open(self, _ws) -> None:
-        logging.debug("on_open")
+        self.last_open_ts = time.monotonic()
         self.ws_ready = True
+        logging.info(
+            "Websocket opened (attempt=%d, ping_interval=%ss, queued_subscriptions=%d, active_subscriptions=%d)",
+            self.connection_attempt,
+            self.ping_interval_sec,
+            len(self.queued_subscriptions),
+            self._active_subscription_count(),
+        )
 
         # 1) flush queued_subscriptions
         if self.queued_subscriptions:
@@ -228,11 +311,31 @@ class WebsocketManager(threading.Thread):
                     logging.warning("Failed to resubscribe %s: %s", identifier, e)
 
     def on_error(self, _ws, error) -> None:
+        self.last_error = str(error)
         logging.warning("Websocket error: %s", error)
 
     def on_close(self, _ws, status_code, msg) -> None:
-        logging.warning("Websocket closed: code=%s, msg=%s", status_code, msg)
+        now = time.monotonic()
+        self.last_close_ts = now
+        self.last_close_status_code = status_code
+        self.last_close_msg = msg
         self.ws_ready = False
+        logging.warning(
+            (
+                "Websocket closed: code=%s, msg=%s, uptime=%s, since_last_message=%s, "
+                "since_last_ping=%s, since_last_pong=%s, active_subscriptions=%d, "
+                "queued_subscriptions=%d, stop_requested=%s"
+            ),
+            status_code,
+            msg,
+            self._format_elapsed(self.last_open_ts, now),
+            self._format_elapsed(self.last_message_ts, now),
+            self._format_elapsed(self.last_ping_sent_ts, now),
+            self._format_elapsed(self.last_pong_ts, now),
+            self._active_subscription_count(),
+            len(self.queued_subscriptions),
+            self.stop_event.is_set(),
+        )
 
     # ---------- Subscription management ----------
 
