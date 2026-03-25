@@ -117,8 +117,10 @@ class WebsocketManager(threading.Thread):
 
         self._create_ws()
 
-        # ping 线程
-        self.ping_interval_sec = 50
+        # ping / watchdog 配置
+        self.ping_interval_sec = 20
+        self.pong_timeout_sec = 10
+        self.message_staleness_sec = 60
         self._ping_thread = threading.Thread(target=self.send_ping_loop, daemon=True)
 
     def _create_ws(self) -> None:
@@ -216,14 +218,52 @@ class WebsocketManager(threading.Thread):
 
     # ---------- ping loop：按 HL 协议发 {"method":"ping"} ----------
 
+    def _force_close_ws(self, reason: str) -> None:
+        """主动关闭当前 ws，触发 run() 里的重连逻辑"""
+        logging.warning("Websocket force-closing: %s", reason)
+        ws = self.ws
+        if ws is not None:
+            try:
+                ws.close()
+            except Exception:
+                pass
+
     def send_ping_loop(self) -> None:
-        """独立线程定期发送 application-level ping"""
+        """独立线程：定期发送 ping + 检查 pong 超时 + 检查消息活性"""
         while not self.stop_event.wait(self.ping_interval_sec):
             ws = self.ws
-            if ws is None:
+            if ws is None or not self.ws_ready:
                 continue
+
+            now = time.monotonic()
+
+            # --- pong 超时检测 ---
+            if (
+                self.last_ping_sent_ts is not None
+                and self.last_pong_ts is not None
+                and self.last_ping_sent_ts > self.last_pong_ts
+                and (now - self.last_ping_sent_ts) > self.pong_timeout_sec
+            ):
+                self._force_close_ws(
+                    f"pong timeout: sent ping {self._format_elapsed(self.last_ping_sent_ts, now)} ago, "
+                    f"last pong {self._format_elapsed(self.last_pong_ts, now)} ago"
+                )
+                continue
+
+            # --- 消息活性检测（有订阅但长时间没收到任何消息）---
+            if (
+                self._active_subscription_count() > 0
+                and self.last_message_ts is not None
+                and (now - self.last_message_ts) > self.message_staleness_sec
+            ):
+                self._force_close_ws(
+                    f"message staleness: no message for {self._format_elapsed(self.last_message_ts, now)}, "
+                    f"active_subscriptions={self._active_subscription_count()}"
+                )
+                continue
+
+            # --- 发送 ping ---
             try:
-                # sock.connected 是 websocket-client 的底层连接状态
                 if ws.sock and ws.sock.connected:
                     ping_ts = time.monotonic()
                     self.last_ping_sent_ts = ping_ts
