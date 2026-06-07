@@ -11,6 +11,7 @@ from hyperliquid.utils.constants import MAINNET_API_URL
 from hyperliquid.utils.signing import (
     CancelByCloidRequest,
     CancelRequest,
+    Grouping,
     ModifyRequest,
     OidOrCloid,
     OrderRequest,
@@ -49,6 +50,30 @@ from hyperliquid.utils.types import (
     SpotMeta,
     Tuple,
 )
+
+
+def _get_dex(coin: str) -> str:
+    return coin.split(":")[0] if ":" in coin else ""
+
+
+USER_SET_ABSTRACTION_WIRE_VALUES = {
+    "disabled": "i",
+    "unifiedAccount": "u",
+    "portfolioMargin": "p",
+}
+
+
+def _multi_sig_payload_action(inner_action):
+    if inner_action.get("type") != "userSetAbstraction":
+        return inner_action
+
+    abstraction = inner_action.get("abstraction")
+    if abstraction not in USER_SET_ABSTRACTION_WIRE_VALUES:
+        return inner_action
+
+    payload_action = inner_action.copy()
+    payload_action["abstraction"] = USER_SET_ABSTRACTION_WIRE_VALUES[abstraction]
+    return payload_action
 
 
 class Exchange(API):
@@ -94,7 +119,8 @@ class Exchange(API):
         coin = self.info.name_to_coin[name]
         if not px:
             # Get midprice
-            px = float(self.info.all_mids()[coin])
+            dex = _get_dex(coin)
+            px = float(self.info.all_mids(dex)[coin])
 
         asset = self.info.coin_to_asset[coin]
         # spot assets start at 10000
@@ -134,7 +160,9 @@ class Exchange(API):
             order["cloid"] = cloid
         return self.bulk_orders([order], builder)
 
-    def bulk_orders(self, order_requests: List[OrderRequest], builder: Optional[BuilderInfo] = None) -> Any:
+    def bulk_orders(
+        self, order_requests: List[OrderRequest], builder: Optional[BuilderInfo] = None, grouping: Grouping = "na"
+    ) -> Any:
         order_wires: List[OrderWire] = [
             order_request_to_order_wire(order, self.info.name_to_asset(order["coin"])) for order in order_requests
         ]
@@ -142,7 +170,7 @@ class Exchange(API):
 
         if builder:
             builder["b"] = builder["b"].lower()
-        order_action = order_wires_to_order_action(order_wires, builder)
+        order_action = order_wires_to_order_action(order_wires, builder, grouping)
 
         signature = sign_l1_action(
             self.wallet,
@@ -245,7 +273,8 @@ class Exchange(API):
             address = self.account_address
         if self.vault_address:
             address = self.vault_address
-        positions = self.info.user_state(address)["assetPositions"]
+        dex = _get_dex(coin)
+        positions = self.info.user_state(address, dex)["assetPositions"]
         for position in positions:
             item = position["position"]
             if coin != item["coin"]:
@@ -1069,6 +1098,7 @@ class Exchange(API):
 
     def multi_sig(self, multi_sig_user, inner_action, signatures, nonce, vault_address=None):
         multi_sig_user = multi_sig_user.lower()
+        payload_action = _multi_sig_payload_action(inner_action)
         multi_sig_action = {
             "type": "multiSig",
             "signatureChainId": "0x66eee",
@@ -1076,7 +1106,7 @@ class Exchange(API):
             "payload": {
                 "multiSigUser": multi_sig_user,
                 "outerSigner": self.wallet.address.lower(),
-                "action": inner_action,
+                "action": payload_action,
             },
         }
         is_mainnet = self.base_url == MAINNET_API_URL
@@ -1104,6 +1134,25 @@ class Exchange(API):
             self.wallet,
             action,
             None,
+            timestamp,
+            self.expires_after,
+            self.base_url == MAINNET_API_URL,
+        )
+        return self._post_action(
+            action,
+            signature,
+            timestamp,
+        )
+
+    def agent_enable_dex_abstraction(self) -> Any:
+        timestamp = get_timestamp_ms()
+        action = {
+            "type": "agentEnableDexAbstraction",
+        }
+        signature = sign_l1_action(
+            self.wallet,
+            action,
+            self.vault_address,
             timestamp,
             self.expires_after,
             self.base_url == MAINNET_API_URL,
@@ -1166,6 +1215,14 @@ class Exchange(API):
 
     def noop(self, nonce):
         action = {"type": "noop"}
+        signature = sign_l1_action(
+            self.wallet, action, self.vault_address, nonce, self.expires_after, self.base_url == MAINNET_API_URL
+        )
+        return self._post_action(action, signature, nonce)
+
+    def gossip_priority_bid(self, slot_id, ip, max_gas):
+        nonce = get_timestamp_ms()
+        action = {"type": "gossipPriorityBid", "slotId": slot_id, "ip": ip, "maxGas": max_gas}
         signature = sign_l1_action(
             self.wallet, action, self.vault_address, nonce, self.expires_after, self.base_url == MAINNET_API_URL
         )
