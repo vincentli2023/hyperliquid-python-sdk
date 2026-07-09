@@ -41,6 +41,30 @@ def subscription_to_identifier(subscription: Subscription) -> str:
         return f'activeAssetCtx:{subscription["coin"].lower()}'
     elif subscription["type"] == "activeAssetData":
         return f'activeAssetData:{subscription["coin"].lower()},{subscription["user"].lower()}'
+    elif subscription["type"] == "notification":
+        return "notification"
+    elif subscription["type"] == "webData3":
+        return f'webData3:{subscription["user"].lower()}'
+    elif subscription["type"] == "twapStates":
+        return f'twapStates:{subscription.get("dex", "")},{subscription["user"].lower()}'
+    elif subscription["type"] == "clearinghouseState":
+        return f'clearinghouseState:{subscription.get("dex", "")},{subscription["user"].lower()}'
+    elif subscription["type"] == "openOrders":
+        return f'openOrders:{subscription.get("dex", "")},{subscription["user"].lower()}'
+    elif subscription["type"] == "userTwapSliceFills":
+        return f'userTwapSliceFills:{subscription["user"].lower()}'
+    elif subscription["type"] == "userTwapHistory":
+        return f'userTwapHistory:{subscription["user"].lower()}'
+    elif subscription["type"] == "spotState":
+        return f'spotState:{subscription["user"].lower()}'
+    elif subscription["type"] == "allDexsClearinghouseState":
+        return f'allDexsClearinghouseState:{subscription["user"].lower()}'
+    elif subscription["type"] == "allDexsAssetCtxs":
+        return "allDexsAssetCtxs"
+    elif subscription["type"] == "outcomeMetaUpdates":
+        return "outcomeMetaUpdates"
+    elif subscription["type"] == "fastAssetCtxs":
+        return "fastAssetCtxs"
     else:
         raise ValueError(f"Unknown subscription type: {subscription}")
 
@@ -79,6 +103,31 @@ def ws_msg_to_identifier(ws_msg: WsMsg) -> Optional[str]:
         return f'activeAssetCtx:{ws_msg["data"]["coin"].lower()}'
     elif ch == "activeAssetData":
         return f'activeAssetData:{ws_msg["data"]["coin"].lower()},{ws_msg["data"]["user"].lower()}'
+    elif ch == "notification":
+        return "notification"
+    elif ch == "webData3":
+        # user is nested: data.userState.user (verified against live mainnet frames)
+        return f'webData3:{ws_msg["data"].get("userState", {}).get("user", "").lower()}'
+    elif ch == "twapStates":
+        return f'twapStates:{ws_msg["data"].get("dex", "")},{ws_msg["data"].get("user", "").lower()}'
+    elif ch == "clearinghouseState":
+        return f'clearinghouseState:{ws_msg["data"].get("dex", "")},{ws_msg["data"].get("user", "").lower()}'
+    elif ch == "openOrders":
+        return f'openOrders:{ws_msg["data"].get("dex", "")},{ws_msg["data"].get("user", "").lower()}'
+    elif ch == "userTwapSliceFills":
+        return f'userTwapSliceFills:{ws_msg["data"].get("user", "").lower()}'
+    elif ch == "userTwapHistory":
+        return f'userTwapHistory:{ws_msg["data"].get("user", "").lower()}'
+    elif ch == "spotState":
+        return f'spotState:{ws_msg["data"].get("user", "").lower()}'
+    elif ch == "allDexsClearinghouseState":
+        return f'allDexsClearinghouseState:{ws_msg["data"].get("user", "").lower()}'
+    elif ch == "allDexsAssetCtxs":
+        return "allDexsAssetCtxs"
+    elif ch == "outcomeMetaUpdates":
+        return "outcomeMetaUpdates"
+    elif ch == "fastAssetCtxs":
+        return "fastAssetCtxs"
     else:
         return None
 

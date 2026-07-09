@@ -53,6 +53,30 @@ ActiveAssetCtxSubscription = TypedDict("ActiveAssetCtxSubscription", {"type": Li
 ActiveAssetDataSubscription = TypedDict(
     "ActiveAssetDataSubscription", {"type": Literal["activeAssetData"], "user": str, "coin": str}
 )
+NotificationSubscription = TypedDict("NotificationSubscription", {"type": Literal["notification"], "user": str})
+WebData3Subscription = TypedDict("WebData3Subscription", {"type": Literal["webData3"], "user": str})
+TwapStatesSubscription = TypedDict(
+    "TwapStatesSubscription", {"type": Literal["twapStates"], "user": str, "dex": NotRequired[str]}
+)
+ClearinghouseStateSubscription = TypedDict(
+    "ClearinghouseStateSubscription", {"type": Literal["clearinghouseState"], "user": str, "dex": NotRequired[str]}
+)
+OpenOrdersSubscription = TypedDict(
+    "OpenOrdersSubscription", {"type": Literal["openOrders"], "user": str, "dex": NotRequired[str]}
+)
+UserTwapSliceFillsSubscription = TypedDict(
+    "UserTwapSliceFillsSubscription", {"type": Literal["userTwapSliceFills"], "user": str}
+)
+UserTwapHistorySubscription = TypedDict("UserTwapHistorySubscription", {"type": Literal["userTwapHistory"], "user": str})
+SpotStateSubscription = TypedDict(
+    "SpotStateSubscription", {"type": Literal["spotState"], "user": str, "isPortfolioMargin": NotRequired[bool]}
+)
+AllDexsClearinghouseStateSubscription = TypedDict(
+    "AllDexsClearinghouseStateSubscription", {"type": Literal["allDexsClearinghouseState"], "user": str}
+)
+AllDexsAssetCtxsSubscription = TypedDict("AllDexsAssetCtxsSubscription", {"type": Literal["allDexsAssetCtxs"]})
+OutcomeMetaUpdatesSubscription = TypedDict("OutcomeMetaUpdatesSubscription", {"type": Literal["outcomeMetaUpdates"]})
+FastAssetCtxsSubscription = TypedDict("FastAssetCtxsSubscription", {"type": Literal["fastAssetCtxs"]})
 # If adding new subscription types that contain coin's don't forget to handle automatically rewrite name to coin in info.subscribe
 Subscription = Union[
     AllMidsSubscription,
@@ -68,6 +92,18 @@ Subscription = Union[
     WebData2Subscription,
     ActiveAssetCtxSubscription,
     ActiveAssetDataSubscription,
+    NotificationSubscription,
+    WebData3Subscription,
+    TwapStatesSubscription,
+    ClearinghouseStateSubscription,
+    OpenOrdersSubscription,
+    UserTwapSliceFillsSubscription,
+    UserTwapHistorySubscription,
+    SpotStateSubscription,
+    AllDexsClearinghouseStateSubscription,
+    AllDexsAssetCtxsSubscription,
+    OutcomeMetaUpdatesSubscription,
+    FastAssetCtxsSubscription,
 ]
 
 AllMidsData = TypedDict("AllMidsData", {"mids": Dict[str, str]})
