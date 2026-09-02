@@ -1,11 +1,13 @@
 import json
 import logging
+import queue
 import threading
 import time
 from collections import defaultdict
 
 import websocket
 
+from hyperliquid.utils.error import WebsocketPostError
 from hyperliquid.utils.types import Any, Callable, Dict, List, NamedTuple, Optional, Subscription, Tuple, WsMsg
 
 ActiveSubscription = NamedTuple(
@@ -157,6 +159,11 @@ class WebsocketManager(threading.Thread):
 
         # subscription_id -> 原始 subscription（用于重连后 resubscribe）
         self.subscription_by_id: Dict[int, Subscription] = {}
+
+        # {"method": "post"} 请求：id -> 等待回包的队列。断线时全部以错误结束，绝不重发。
+        self._post_id_counter = 0
+        self._post_lock = threading.Lock()
+        self._pending_posts: Dict[int, "queue.Queue[Any]"] = {}
 
         self.ws_url = "ws" + base_url[len("http") :] + "/ws"
         self.ws: websocket.WebSocketApp | None = None
@@ -354,6 +361,9 @@ class WebsocketManager(threading.Thread):
             return
         logging.debug("on_message %s", message)
         ws_msg: WsMsg = json.loads(message)
+        if ws_msg.get("channel") == "post":
+            self._dispatch_post(ws_msg.get("data") or {})
+            return
         identifier = ws_msg_to_identifier(ws_msg)
         if identifier == "pong":
             self.last_pong_ts = now
@@ -439,6 +449,65 @@ class WebsocketManager(threading.Thread):
             self._force_close_reason,
             self.stop_event.is_set(),
         )
+        self._fail_pending_posts("websocket closed")
+
+    # ---------- post requests ({"method": "post"}) ----------
+
+    def post(self, request: Any, timeout: float = 5.0) -> Any:
+        """Send {"method": "post", "id", "request"} and wait for the matching {"channel": "post"} reply.
+
+        request: {"type": "action", "payload": {...}} or {"type": "info", "payload": {...}} as in the HL docs.
+        Returns the reply's data.response, i.e. {"type": "action"|"info", "payload": ...} or
+        {"type": "error", "payload": str}. Raises WebsocketPostError when the socket is not ready, the send
+        fails, the reply does not arrive within `timeout`, or the connection closes while waiting.
+        A timeout means the outcome is UNKNOWN: callers must query state before resending an action.
+        """
+        ws = self.ws
+        if ws is None or not self.ws_ready:
+            raise WebsocketPostError("websocket not ready")
+        reply: "queue.Queue[Any]" = queue.Queue(maxsize=1)
+        with self._post_lock:
+            self._post_id_counter += 1
+            post_id = self._post_id_counter
+            self._pending_posts[post_id] = reply
+        try:
+            ws.send(json.dumps({"method": "post", "id": post_id, "request": request}))
+            try:
+                data = reply.get(timeout=timeout)
+            except queue.Empty:
+                raise WebsocketPostError(f"post id={post_id} timed out after {timeout}s") from None
+        except WebsocketPostError:
+            raise
+        except Exception as e:
+            raise WebsocketPostError(f"post id={post_id} send failed: {e}") from e
+        finally:
+            with self._post_lock:
+                self._pending_posts.pop(post_id, None)
+        if isinstance(data, WebsocketPostError):
+            raise data
+        return data
+
+    def _dispatch_post(self, data: Any) -> None:
+        post_id = data.get("id")
+        with self._post_lock:
+            reply = self._pending_posts.get(post_id)
+        if reply is None:
+            self._log(logging.WARNING, "post reply with unknown id=%s: %s", post_id, data)
+            return
+        try:
+            reply.put_nowait(data.get("response"))
+        except queue.Full:
+            self._log(logging.WARNING, "duplicate post reply for id=%s ignored", post_id)
+
+    def _fail_pending_posts(self, reason: str) -> None:
+        with self._post_lock:
+            pending = list(self._pending_posts.items())
+            self._pending_posts.clear()
+        for post_id, reply in pending:
+            try:
+                reply.put_nowait(WebsocketPostError(f"post id={post_id} failed: {reason}"))
+            except queue.Full:
+                pass
 
     # ---------- Subscription management ----------
 

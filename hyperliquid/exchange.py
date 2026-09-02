@@ -8,6 +8,7 @@ from eth_account.signers.local import LocalAccount
 from hyperliquid.api import API
 from hyperliquid.info import Info
 from hyperliquid.utils.constants import MAINNET_API_URL
+from hyperliquid.utils.error import ClientError
 from hyperliquid.utils.signing import (
     CancelByCloidRequest,
     CancelRequest,
@@ -37,6 +38,7 @@ from hyperliquid.utils.signing import (
     sign_user_set_abstraction_action,
     sign_withdraw_from_bridge_action,
 )
+from hyperliquid.websocket_manager import WebsocketManager
 from hyperliquid.utils.types import (
     Abstraction,
     AgentAbstraction,
@@ -91,6 +93,7 @@ class Exchange(API):
         spot_meta: Optional[SpotMeta] = None,
         perp_dexs: Optional[List[str]] = None,
         timeout: Optional[float] = None,
+        ws_manager: Optional[WebsocketManager] = None,
     ):
         super().__init__(base_url, timeout)
         self.wallet = wallet
@@ -98,6 +101,9 @@ class Exchange(API):
         self.account_address = account_address
         self.info = Info(base_url, True, meta, spot_meta, perp_dexs, timeout)
         self.expires_after: Optional[int] = None
+        # Optional: route signed actions over an existing websocket ({"method": "post"}) instead of HTTP.
+        # Never falls back to HTTP after a send: a websocket timeout leaves the action's outcome unknown.
+        self.ws_manager = ws_manager
 
     def _post_action(self, action, signature, nonce):
         payload = {
@@ -108,7 +114,16 @@ class Exchange(API):
             "expiresAfter": self.expires_after,
         }
         logging.debug(payload)
+        if self.ws_manager is not None:
+            return self._post_action_ws(payload)
         return self.post("/exchange", payload)
+
+    def _post_action_ws(self, payload):
+        response = self.ws_manager.post({"type": "action", "payload": payload})
+        if not isinstance(response, dict) or response.get("type") == "error":
+            message = response.get("payload") if isinstance(response, dict) else response
+            raise ClientError(400, None, message, None)
+        return response.get("payload")
 
     def _slippage_price(
         self,
