@@ -3,6 +3,7 @@ from hyperliquid.utils.types import (
     Any,
     Callable,
     Cloid,
+    Dict,
     List,
     Meta,
     Optional,
@@ -10,6 +11,13 @@ from hyperliquid.utils.types import (
     SpotMetaAndAssetCtxs,
     Subscription,
     cast,
+)
+from hyperliquid.utils.outcome import (
+    is_outcome_coin,
+    outcome_asset,
+    outcome_coin,
+    outcome_label,
+    settle_time_ms,
 )
 from hyperliquid.websocket_manager import WebsocketManager
 
@@ -25,6 +33,7 @@ class Info(API):
         # the original dex.
         perp_dexs: Optional[List[str]] = None,
         timeout: Optional[float] = None,
+        outcome_markets: bool = False,
     ):  # pylint: disable=too-many-locals
         super().__init__(base_url, timeout)
         self.ws_manager: Optional[WebsocketManager] = None
@@ -69,6 +78,12 @@ class Info(API):
             else:
                 fresh_meta = self.meta(dex=perp_dex)
                 self.set_perp_meta(fresh_meta, offset)
+
+        # HIP-4 outcome markets ("#<encoding>" coins). Off by default: no extra requests, no table entries.
+        self.outcome_meta_by_id: Dict[int, Any] = {}
+        self.outcome_templates_by_id: Dict[str, Any] = {}
+        if outcome_markets:
+            self.load_outcome_meta()
 
     def set_perp_meta(self, meta: Meta, offset: int) -> Any:
         for asset, asset_info in enumerate(meta["universe"]):
@@ -768,6 +783,62 @@ class Info(API):
         """
         return self.post("/info", {"type": "extraAgents", "user": user})
 
+    # ---------- HIP-4 outcome markets ----------
+
+    def outcome_meta(self) -> Any:
+        """Retrieve live (unsettled) outcome markets.
+
+        POST /info
+
+        Returns:
+            {
+                outcomes: [{outcome: int, name: str, description: str, sideSpecs: [{name: str}, {name: str}],
+                            quoteToken: str, venue: str, deployerFeeScale: str}],
+                questions: [...], deployers: [...], feeScale: str
+            }
+        """
+        return self.post("/info", {"type": "outcomeMeta"})
+
+    def outcome_templates(self) -> Any:
+        """Retrieve validator-approved outcome templates (display name/description with {keyword} placeholders).
+
+        POST /info
+        """
+        return self.post("/info", {"type": "outcomeTemplates"})
+
+    def register_outcome(self, name: str) -> int:
+        """Make an outcome coin ("#13380") orderable/subscribable. Pure arithmetic, idempotent; returns the asset id."""
+        asset = outcome_asset(name)
+        self.coin_to_asset[name] = asset
+        self.name_to_coin[name] = name
+        self.asset_to_sz_decimals[asset] = 0  # outcome shares are whole units
+        return asset
+
+    def load_outcome_meta(self) -> Any:
+        """Fetch outcomeMeta (+ templates once) and register every live outcome side. Returns the raw outcomeMeta."""
+        meta = self.outcome_meta()
+        if not self.outcome_templates_by_id:
+            self.outcome_templates_by_id = {t["id"]: t for t in self.outcome_templates()}
+        for entry in meta.get("outcomes", []):
+            self.outcome_meta_by_id[entry["outcome"]] = entry
+            for side in range(len(entry.get("sideSpecs", [])) or 2):
+                self.register_outcome(outcome_coin(entry["outcome"], side))
+        return meta
+
+    def outcome_label(self, name: str) -> str:
+        """'#13460' -> 'xyz:SILVER above 64.128 at 2026-09-02 21:00 UTC? Yes' (raw name when metadata is unknown)."""
+        if not is_outcome_coin(name):
+            return name
+        entry = self.outcome_meta_by_id.get(int(name[1:]) // 10)
+        return outcome_label(name, entry, self.outcome_templates_by_id)
+
+    def outcome_settle_time_ms(self, name: str) -> Optional[int]:
+        """Settlement time (epoch ms, UTC) from the cached metadata, or None when unknown."""
+        if not is_outcome_coin(name):
+            return None
+        entry = self.outcome_meta_by_id.get(int(name[1:]) // 10)
+        return settle_time_ms(entry["description"]) if entry else None
+
     def _remap_coin_subscription(self, subscription: Subscription) -> None:
         if (
             subscription["type"] == "l2Book"
@@ -776,6 +847,8 @@ class Info(API):
             or subscription["type"] == "bbo"
             or subscription["type"] == "activeAssetCtx"
         ):
+            if subscription["coin"] not in self.name_to_coin and is_outcome_coin(subscription["coin"]):
+                self.register_outcome(subscription["coin"])
             subscription["coin"] = self.name_to_coin[subscription["coin"]]
 
     def subscribe(self, subscription: Subscription, callback: Callable[[Any], None]) -> int:
@@ -793,4 +866,6 @@ class Info(API):
             return self.ws_manager.unsubscribe(subscription, subscription_id)
 
     def name_to_asset(self, name: str) -> int:
+        if name not in self.name_to_coin and is_outcome_coin(name):
+            self.register_outcome(name)
         return self.coin_to_asset[self.name_to_coin[name]]

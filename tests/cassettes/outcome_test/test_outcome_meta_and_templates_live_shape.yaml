@@ -1,0 +1,195 @@
+interactions:
+- request:
+    body: '{"type": "outcomeMeta"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '23'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.5
+    method: POST
+    uri: https://api.hyperliquid.xyz/info
+  response:
+    body:
+      string: '{"outcomes":[{"outcome":1209,"name":"template:priceTouch","description":"perp:HYPE|priceDescription:HYPE-USDC
+        perp mark |seconds:1|target:100|time:20261001-0000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1210,"name":"template:binaryPrice","description":"perp:BTC|priceDescription:BTC-USDC
+        mark|seconds:1|threshold:100000|time:20261001-0000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1211,"name":"template:priceTouch","description":"perp:BTC|priceDescription:BTC-USDC
+        mark|seconds:1|target:100000|time:20261001-0000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1212,"name":"template:priceTouch","description":"perp:BTC|priceDescription:BTC-USDC
+        mark|seconds:1|target:95000|time:20261001-0000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1213,"name":"template:priceTouch","description":"perp:BTC|priceDescription:BTC-USDC
+        mark|seconds:1|target:90000|time:20261001-0000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1214,"name":"template:priceTouch","description":"perp:BTC|priceDescription:BTC-USDC
+        mark|seconds:1|target:85000|time:20261001-0000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1215,"name":"template:priceTouch","description":"perp:BTC|priceDescription:BTC-USDC
+        mark|seconds:1|target:70000|time:20261001-0000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1216,"name":"template:priceTouch","description":"perp:BTC|priceDescription:BTC-USDC
+        mark|seconds:1|target:65000|time:20261001-0000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1217,"name":"template:priceTouch","description":"perp:BTC|priceDescription:BTC-USDC
+        mark|seconds:1|target:60000|time:20261001-0000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1226,"name":"template
+        fallback","description":"other","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1227,"name":"template:policyRateNoChange","description":"","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1228,"name":"template:policyRateDecrease","description":"","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1229,"name":"template:policyRateIncrease","description":"","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1230,"name":"template:binaryPrice","description":"perp:xyz:CL|priceDescription:xyz:CL|seconds:1|threshold:83.196|time:20260929-2100","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1251,"name":"template:priceTouch","description":"perp:HYPE|priceDescription:HYPE-USDC
+        perp mark|seconds:3|target:90|time:20261001-0000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1260,"name":"template:binaryPrice","description":"perp:xyz:XYZ100|priceDescription:the
+        Pyth US100 index price|seconds:90|threshold:28566|time:20260904-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"skew","deployerFeeScale":"1.0"},{"outcome":1261,"name":"template:binaryPrice","description":"perp:xyz:XYZ100|priceDescription:the
+        Pyth US100 index price|seconds:90|threshold:29300|time:20260904-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"skew","deployerFeeScale":"1.0"},{"outcome":1262,"name":"template:binaryPrice","description":"perp:xyz:XYZ100|priceDescription:the
+        Pyth US100 index price|seconds:90|threshold:30034|time:20260904-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"skew","deployerFeeScale":"1.0"},{"outcome":1263,"name":"template:binaryPrice","description":"perp:xyz:SP500|priceDescription:the
+        Pyth US500 index price|seconds:90|threshold:7546|time:20260904-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"skew","deployerFeeScale":"1.0"},{"outcome":1264,"name":"template:binaryPrice","description":"perp:xyz:SP500|priceDescription:the
+        Pyth US500 index price|seconds:90|threshold:7700|time:20260904-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"skew","deployerFeeScale":"1.0"},{"outcome":1265,"name":"template:binaryPrice","description":"perp:xyz:SP500|priceDescription:the
+        Pyth US500 index price|seconds:90|threshold:7854|time:20260904-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"skew","deployerFeeScale":"1.0"},{"outcome":1288,"name":"template:priceTouch","description":"perp:PONS|priceDescription:PONS-USDC
+        perp mark|seconds:3|target:1|time:20260907-0600","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1338,"name":"template:binaryPrice","description":"perp:xyz:DRAM|priceDescription:xyz:DRAM-USDC
+        perp mark|seconds:3|threshold:55.104|time:20260902-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1339,"name":"template:binaryPrice","description":"perp:xyz:NBIS|priceDescription:xyz:NBIS-USDC
+        perp mark|seconds:3|threshold:199.54|time:20260902-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1340,"name":"template:binaryPrice","description":"perp:xyz:SNDK|priceDescription:xyz:SNDK-USDC
+        perp mark|seconds:3|threshold:1536.2|time:20260902-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1341,"name":"template:binaryPrice","description":"perp:xyz:SP500|priceDescription:xyz:SP500-USDC
+        perp mark|seconds:3|threshold:7634.6|time:20260902-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1342,"name":"template:binaryPrice","description":"perp:xyz:SPCX|priceDescription:xyz:SPCX-USDC
+        perp mark|seconds:3|threshold:142.18|time:20260902-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1343,"name":"template:binaryPrice","description":"perp:xyz:XYZ100|priceDescription:xyz:XYZ100-USDC
+        perp mark|seconds:3|threshold:29075|time:20260902-2000","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1345,"name":"template:binaryPrice","description":"perp:xyz:GOLD|priceDescription:xyz:GOLD-USDC
+        perp mark|seconds:3|threshold:4333.5|time:20260902-2100","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1346,"name":"template:binaryPrice","description":"perp:xyz:SILVER|priceDescription:xyz:SILVER-USDC
+        perp mark|seconds:3|threshold:64.128|time:20260902-2100","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1347,"name":"template:binaryPrice","description":"perp:xyz:CL|priceDescription:xyz:CL-USDC
+        perp mark|seconds:3|threshold:90.555|time:20260902-2100","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1356,"name":"Recurring","description":"class:priceBinary|underlying:BTC|expiry:20260903-0600|targetPrice:77635|period:1d","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC"},{"outcome":1357,"name":"Recurring","description":"class:priceBinary|underlying:ETH|expiry:20260903-0600|targetPrice:2423|period:1d","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC"},{"outcome":1358,"name":"Recurring","description":"class:priceBinary|underlying:SOL|expiry:20260903-0600|targetPrice:100.22|period:1d","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC"},{"outcome":1359,"name":"Recurring","description":"class:priceBinary|underlying:HYPE|expiry:20260903-0600|targetPrice:83.677|period:1d","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC"},{"outcome":1360,"name":"Recurring
+        Fallback","description":"other","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC"},{"outcome":1361,"name":"Recurring
+        Named Outcome","description":"index:0","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC"},{"outcome":1362,"name":"Recurring
+        Named Outcome","description":"index:1","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC"},{"outcome":1363,"name":"Recurring
+        Named Outcome","description":"index:2","sideSpecs":[{"name":"Yes"},{"name":"No"}],"quoteToken":"USDC"},{"outcome":1365,"name":"template:binaryPrice","description":"perp:ZEC|priceDescription:ZEC-USDC
+        perp mark|seconds:3|threshold:835.61|time:20260903-0600","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1366,"name":"template:binaryPrice","description":"perp:xyz:SKHX|priceDescription:xyz:SKHX-USDC
+        perp mark|seconds:3|threshold:1180.7|time:20260903-0630","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"out","deployerFeeScale":"1.0"},{"outcome":1372,"name":"template:binaryPrice","description":"perp:BTC|priceDescription:the
+        Hyperliquid BTC perp trade|seconds:90|threshold:76842|time:20260902-1300","sideSpecs":[{"name":"template:Yes"},{"name":"template:No"}],"quoteToken":"USDC","venue":"skew","deployerFeeScale":"1.0"}],"questions":[{"question":191,"name":"template:policyRateDecision","description":"decisionDeadline:20261028-2359|decisionLabel:September
+        2026|institution:Federal Reserve''s Open Market Committee|officialSource:Federal
+        Reserve''s Open Market Committee|policyMeasure:the upper bound target range
+        for the federal funds rate|scheduledDecision:20260916-1800","fallbackOutcome":1226,"namedOutcomes":[1227,1228,1229],"settledNamedOutcomes":[]},{"question":195,"name":"Recurring","description":"class:priceBucket|underlying:BTC|expiry:20260903-0600|priceThresholds:76082,79187|period:1d","fallbackOutcome":1360,"namedOutcomes":[1361,1362,1363],"settledNamedOutcomes":[]}],"deployers":[{"deployer":"0x08e9c89f46dccee91bdb85c6532eb93a4c335efe","venue":"skew","subDeployers":[["registerAndAssociateNamedOutcomeFromTemplate",["0x1c867861e0cffb0eba07d9d94f716189c130dac6"]],["registerQuestionFromTemplate",["0x1c867861e0cffb0eba07d9d94f716189c130dac6"]],["registerStandaloneOutcomeFromTemplate",["0x1c867861e0cffb0eba07d9d94f716189c130dac6"]],["settleOutcome",["0x1c867861e0cffb0eba07d9d94f716189c130dac6"]],["settleQuestion",["0x1c867861e0cffb0eba07d9d94f716189c130dac6"]]]},{"deployer":"0x0c46eb73fae2816f219fcf11f50d6d3c59b5819e","venue":"out","subDeployers":[["registerAndAssociateNamedOutcomeFromTemplate",["0xf1923927d7d2847191fb7ef8b1a16028aa5ae754"]],["registerQuestionFromTemplate",["0xf1923927d7d2847191fb7ef8b1a16028aa5ae754"]],["registerStandaloneOutcomeFromTemplate",["0xf1923927d7d2847191fb7ef8b1a16028aa5ae754"]],["settleOutcome",["0xf1923927d7d2847191fb7ef8b1a16028aa5ae754"]],["settleQuestion",["0xf1923927d7d2847191fb7ef8b1a16028aa5ae754"]]]}],"feeScale":"1.0"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '12023'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 02 Sep 2026 12:36:16 GMT
+      Server:
+      - nginx/1.22.1
+      Via:
+      - 1.1 d6561386137ba6ee4790474c67fb666e.cloudfront.net (CloudFront)
+      X-Amz-Cf-Id:
+      - v_4LCQt1N2WIZO1fW-orH5y8Hi_mk74pXuR5brkARlJvzhIdMJ8xtQ==
+      X-Amz-Cf-Pop:
+      - NRT57-P7
+      X-Cache:
+      - Miss from cloudfront
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      vary:
+      - origin
+      - access-control-request-method
+      - access-control-request-headers
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"type": "outcomeTemplates"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '28'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.5
+    method: POST
+    uri: https://api.hyperliquid.xyz/info
+  response:
+    body:
+      string: '[{"id":"binaryPrice","role":{"standaloneOutcome":{"sideNames":["Yes","No"]}},"name":"{perp}
+        above {threshold} at {time}?","description":"The market resolves to Yes if
+        the {perp} price is above {threshold} at {time}, and otherwise resolves to
+        No. Settlement is according to the {seconds}-second TWAP of {priceDescription}
+        price ending at {time}. If {perp} is delisted before this market settles,
+        settlement is instead according to the {perp} settlement price at delisting.
+        metadata=category:price|subCategory:N/A|semanticRestriction:This market must
+        refer to the price of a Hyperliquid perp.","keywords":[["perp","hlPerp"],["priceDescription","string"],["seconds","uInt"],["threshold","uDecimal"],["time","dateTime"]]},{"id":"policyRateDecision","role":"question","name":"{institution}
+        {decisionLabel} rate decision","description":"This market has three possible
+        results: No change, Decrease, or Increase. Exactly one corresponding named
+        outcome resolves to Yes; the other two and the protocol-created fallback resolve
+        to No. It covers the {decisionLabel} {institution} decision concerning {policyMeasure},
+        scheduled for {scheduledDecision} UTC (the \"Decision\"). The Decision Value
+        is the numeric value of {policyMeasure} announced by {officialSource}. The
+        Prior Value is the value of that same measure in effect immediately before
+        the Decision. No change resolves to Yes if the Decision Value equals the Prior
+        Value. Decrease resolves to Yes if the Decision Value is lower. Increase resolves
+        to Yes if the Decision Value is higher. If the Decision is rescheduled, the
+        rescheduled decision applies if {officialSource} publishes it by {decisionDeadline}
+        UTC. If the Decision is canceled or postponed without a replacement decision,
+        or no official Decision Value is published by {decisionDeadline} UTC, No change
+        resolves to Yes. Policy changes outside the scheduled Decision are ignored
+        except when establishing the Prior Value. If {institution} replaces {policyMeasure},
+        the closest official successor measure identified by {officialSource} is used.
+        Resolution uses the initially published decision; later revisions do not change
+        the resolution. {officialSource} is the primary resolution source; independent
+        reputable reporting may be used if it has not published the relevant decision.
+        No change resolves to Yes under the deadline rule above only if neither {officialSource}
+        nor independent reputable reporting establishes a Decision Value by {decisionDeadline}
+        UTC. metadata=category:economics|subCategory:N/A|semanticRestriction:This
+        market must refer to a scheduled policy rate decision by an official institution.","keywords":[["decisionDeadline","dateTime"],["decisionLabel","string"],["institution","string"],["officialSource","string"],["policyMeasure","string"],["scheduledDecision","dateTime"]]},{"id":"policyRateDecrease","role":{"questionOutcome":{"parent":"policyRateDecision"}},"name":"Decrease","description":"This
+        outcome resolves to Yes if the Decision Value is lower than the Prior Value
+        under the parent question''s rules.","keywords":[]},{"id":"policyRateIncrease","role":{"questionOutcome":{"parent":"policyRateDecision"}},"name":"Increase","description":"This
+        outcome resolves to Yes if the Decision Value is higher than the Prior Value
+        under the parent question''s rules.","keywords":[]},{"id":"policyRateNoChange","role":{"questionOutcome":{"parent":"policyRateDecision"}},"name":"No
+        change","description":"This outcome resolves to Yes if the Decision Value
+        equals the Prior Value, or if the parent question''s cancellation, postponement,
+        or decision-deadline rule applies.","keywords":[]},{"id":"priceTouch","role":{"standaloneOutcome":{"sideNames":["Yes","No"]}},"name":"{perp}
+        touches {target} by {time}","description":"The market resolves to Yes if the
+        {perp} price touches {target} at or before {time}, and otherwise resolves
+        to No. The price counts as touched once the {seconds}-second TWAP of {priceDescription}
+        price equals or crosses {target} at any time after this market is deployed
+        and at or before {time}; the market can settle as soon as a touch occurs.
+        If {perp} is delisted before this market settles, the {perp} settlement price
+        at delisting counts as the final price for the touch determination, and the
+        market can settle at delisting if the price has not touched {target} by then.
+        metadata=category:price|subCategory:N/A|semanticRestriction:This market must
+        refer to the price of a Hyperliquid perp.","keywords":[["perp","hlPerp"],["priceDescription","string"],["seconds","uInt"],["target","uDecimal"],["time","dateTime"]]},{"id":"scalarPrice","role":{"standaloneOutcome":{"sideNames":["Long","Short"]}},"name":"{perp}
+        from {low} to {high} at {time}","description":"If the {perp} price is at or
+        above {high} at {time}, Long tokens pay out $1 each. If the price is at or
+        below {low}, Long tokens pay out $0 each. Otherwise, Long tokens pay out $1
+        times (price - {low}) / ({high} - {low}) each. In each case, Short tokens
+        pay out $1 minus the Long payout each. Settlement is according to the {seconds}-second
+        TWAP of {priceDescription} price ending at {time}. If {perp} is delisted before
+        this market settles, settlement is instead according to the {perp} settlement
+        price at delisting. metadata=category:price|subCategory:N/A|semanticRestriction:This
+        market must refer to the price of a Hyperliquid perp.","keywords":[["high","uDecimal"],["low","uDecimal"],["perp","hlPerp"],["priceDescription","string"],["seconds","uInt"],["time","dateTime"]]}]'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '5487'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 02 Sep 2026 12:36:16 GMT
+      Server:
+      - nginx/1.30.3
+      Via:
+      - 1.1 36ccdb9f21575bdbc1202eb40db5a1d2.cloudfront.net (CloudFront)
+      X-Amz-Cf-Id:
+      - IW77lI3fxwHPZc8EAX0bPr-74joeA1zSBLi9PNFRSv68HrLzOTFu_g==
+      X-Amz-Cf-Pop:
+      - NRT57-P7
+      X-Cache:
+      - Miss from cloudfront
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      vary:
+      - origin
+      - access-control-request-method
+      - access-control-request-headers
+    status:
+      code: 200
+      message: OK
+version: 1
