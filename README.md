@@ -67,7 +67,9 @@ resends. A timeout means the action's outcome is unknown: query state before ret
 
 Known limits: `orderUpdates` can only be subscribed for one address per connection (its identifier carries no
 address); settled outcomes disappear from `outcomeMeta`, so labels fall back to the raw coin name; outcome sizes
-are whole shares and prices carry 5 significant figures.
+are whole shares and prices carry 5 significant figures. Subscribing `l2Book`/`bbo` on a **settled** outcome coin makes the
+server drop the websocket, and the manager resubscribes on reconnect, so only subscribe coins present in `outcomeMeta` and
+unsubscribe on `outcomeSettled` (verified 2026-09-02).
 
 ## Getting started with contributing to this repo
 
