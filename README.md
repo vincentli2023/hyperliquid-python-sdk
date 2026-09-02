@@ -44,6 +44,31 @@ vim examples/config.json
 python examples/basic_order.py
 ```
 
+## HIP-4 outcome markets and websocket post (fork additions)
+
+Outcome (prediction) markets trade as spot-like coins named `#<encoding>` with `encoding = 10 * outcome + side`
+(`#13380` is outcome 1338 side 0, usually *Yes*; `#13381` is *No*). Balances show up in `spotClearinghouseState`
+as `+<encoding>` tokens and orders use asset id `100_000_000 + encoding`. Helpers live in `hyperliquid.utils.outcome`.
+
+```python
+info = Info(outcome_markets=True)               # default False: no extra request, tables unchanged
+info.outcome_label("#13460")                    # 'xyz:SILVER above 64.128 at 2026-09-02 21:00 UTC? Yes'
+info.outcome_settle_time_ms("#13460")           # 1788382800000
+info.subscribe({"type": "l2Book", "coin": "#13460"}, print)   # '#' coins register on demand
+exchange.order("#13460", True, 100, 0.43, {"limit": {"tif": "Ioc"}})   # whole shares, 5 significant figures
+exchange.split_outcome(1346, 100); exchange.merge_outcome(1346)        # merge_outcome(None) = merge max
+exchange.merge_question(195); exchange.negate_outcome(195, 1361, 12.5)
+```
+
+`Exchange(..., ws_manager=info.ws_manager)` sends signed actions as `{"method": "post"}` over an existing
+websocket instead of HTTP; the payload is identical. `WebsocketManager.post()` raises `WebsocketPostError` when the
+socket is not ready, the send fails, the reply times out or the connection closes while waiting, and it never
+resends. A timeout means the action's outcome is unknown: query state before retrying.
+
+Known limits: `orderUpdates` can only be subscribed for one address per connection (its identifier carries no
+address); settled outcomes disappear from `outcomeMeta`, so labels fall back to the raw coin name; outcome sizes
+are whole shares and prices carry 5 significant figures.
+
 ## Getting started with contributing to this repo
 
 1. Download `Poetry`: https://python-poetry.org/. 
