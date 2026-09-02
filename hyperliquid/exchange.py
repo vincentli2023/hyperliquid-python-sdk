@@ -19,6 +19,7 @@ from hyperliquid.utils.signing import (
     OrderWire,
     ScheduleCancelAction,
     float_to_usd_int,
+    float_to_wire,
     get_timestamp_ms,
     order_request_to_order_wire,
     order_wires_to_order_action,
@@ -1211,6 +1212,39 @@ class Exchange(API):
             action,
             signature,
             timestamp,
+        )
+
+    # ---------- HIP-4 outcome markets (userOutcome actions) ----------
+    # Key order inside the action mirrors the on-chain serialization seen in explorer txDetails,
+    # e.g. {"type": "userOutcome", "mergeOutcome": {"outcome": 1345, "amount": "37"}}; the L1 action hash
+    # is order-sensitive (msgpack), so do not reorder these dicts.
+
+    def _user_outcome(self, inner: Any) -> Any:
+        timestamp = get_timestamp_ms()
+        action = {"type": "userOutcome", **inner}
+        signature = sign_l1_action(
+            self.wallet, action, self.vault_address, timestamp, self.expires_after, self.base_url == MAINNET_API_URL
+        )
+        return self._post_action(action, signature, timestamp)
+
+    def split_outcome(self, outcome: int, amount: float) -> Any:
+        """Split `amount` quote tokens into `amount` Yes and `amount` No shares of `outcome`."""
+        return self._user_outcome({"splitOutcome": {"outcome": outcome, "amount": float_to_wire(amount)}})
+
+    def merge_outcome(self, outcome: int, amount: Optional[float] = None) -> Any:
+        """Merge `amount` Yes + `amount` No shares of `outcome` back into quote tokens. None merges the maximum."""
+        wire_amount = None if amount is None else float_to_wire(amount)
+        return self._user_outcome({"mergeOutcome": {"outcome": outcome, "amount": wire_amount}})
+
+    def merge_question(self, question: int, amount: Optional[float] = None) -> Any:
+        """Merge `amount` Yes shares from every outcome of `question` into quote tokens. None merges the maximum."""
+        wire_amount = None if amount is None else float_to_wire(amount)
+        return self._user_outcome({"mergeQuestion": {"question": question, "amount": wire_amount}})
+
+    def negate_outcome(self, question: int, outcome: int, amount: float) -> Any:
+        """Convert `amount` No shares of `outcome` into `amount` Yes shares of every other outcome of `question`."""
+        return self._user_outcome(
+            {"negateOutcome": {"question": question, "outcome": outcome, "amount": float_to_wire(amount)}}
         )
 
     def noop(self, nonce):
